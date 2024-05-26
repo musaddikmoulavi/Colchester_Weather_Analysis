@@ -1,0 +1,340 @@
+---
+title: "Colchester Weather(2023) - Data Visualization "
+author: "Musaddik Maulavi"
+date: "2024-04-16"
+output: html_document
+---
+
+
+
+## Introduction
+
+The "temp2023.csv" dataset includes daily climatic data gathered from a weather station near Colchester in the year 2023. This dataset contains 365 observations and 18 variables, offering a thorough picture of the weather conditions seen during the year. Each observation is for a single day, and the variables include average temperature, maximum and lowest temperature, wind speed and direction, precipitation, cloud cover, sunlight duration, visibility, and more.
+
+The dataset provides insightful information on the seasonal variations and trends of the weather in the Colchester region. We may learn more about seasonal patterns, weather extremes, and possible relationships between other weather variables by examining this data. Applications such as agriculture, urban planning, energy management, and climate research can all benefit greatly from such insights.
+
+We will thoroughly analyze the "temp2023.csv" file and look at the many weather factors that are recorded all year long in this report. Finding significant patterns, trends, and links in the data is our goal, and we plan to do this using interpretative analysis, data visualization, and descriptive statistics. Furthermore, we'll make use of sophisticated graphical and statistical approaches to present a thorough summary of the climatic conditions in Colchester.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## Importing the required library.
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(leaflet)
+library(plotly)
+library(RColorBrewer)
+
+```
+
+## Dataset
+
+```{r}
+data <- read.csv('temp2023.csv')
+# head(data)
+names(data)
+```
+
+```{r}
+str(data)
+```
+
+## Data Cleaning and pre processing
+
+Before performing Data Visualization I have cleaned the dataset.
+Firstly I have converted the Date column in Date format. Then I have checked the NA values in each column.
+
+```{r}
+# Converting to Date format
+data$Date <- as.Date(data$Date, format = "%d/%m/%Y")
+
+```
+
+
+```{r}
+# Counting NA values in each column
+na_counts <- colSums(is.na(data))
+
+# Display NA counts
+print(na_counts)
+```
+
+I have separated the date column in Date Month Year separately. So that the month column can be used for Data Visualization easily.
+
+```{r}
+
+
+final_proj_data <- data[,1:16]
+head(final_proj_data)
+
+day <- day(data$Date)
+month <- month(data$Date)
+year <- year(data$Date)
+
+# Add the split date components as new columns to the existing data frame
+final_proj_data$Day <- as.numeric(day)
+final_proj_data$Month <- as.numeric(month)
+final_proj_data$Year <- as.numeric(year)
+
+final_proj_data <- final_proj_data[,-2]
+
+
+
+```
+
+
+```{r}
+str(final_proj_data)
+```
+
+## Data Visualization
+
+### 1. Table
+
+```{r}
+# Table
+one_way_table <- table(final_proj_data$WindkmhDir)
+print(one_way_table)
+```
+
+The provided one-way table represents the frequency of wind directions observed in the climate data collected from a weather station close to Colchester in 2023. It categorizes the wind direction into 16 different categories, including "E" (East), "ENE" (East-Northeast), "ESE" (East-Southeast), "N" (North), "NE" (Northeast), "NNE" (North-Northeast), "NNW" (North-Northwest), "NW" (Northwest), "S" (South), "SE" (Southeast), "SSE" (South-Southeast), "SSW" (South-Southwest), "SW" (Southwest), "W" (West), "WNW" (West-Northwest), and "WSW" (West-Southwest).
+
+Every category denotes a distinct direction in which the wind is blowing, and the dataset records the related frequency of occurrences. As an illustration, there are 10 observations that have an easterly wind direction and 58 observations that have a west-southwest wind direction.
+
+
+
+### 2. Bar Plot
+
+```{r, fig.width=8, fig.height=6}
+# Bar plot of average temperature by month
+ggplot(final_proj_data, aes(x = factor(Month), y = TemperatureCAvg)) +
+  geom_bar(stat = "summary", fun = "mean", fill = "lightgreen") +
+  labs(title = "Average Temperature by Month", x = "Month", y = "Average Temperature (°C)")
+
+```
+
+The average temperature variation throughout the course of the year is depicted in a bar plot. The mean temperature recorded for a given month is represented by each bar. The months are shown on the x-axis, while the average temperature in degrees Celsius is shown on the y-axis. The figure makes it easy to compare annual temperature trends and highlights any patterns or seasonal fluctuations. One potential use for it may be to shed light on seasonal variations in temperature, such as summertime warmth and wintertime cold. The average temperature readings are shown by the light green color fills, which make the information more aesthetically pleasing and understandable.
+
+
+### 3. Box Plot
+```{r, fig.width=8, fig.height=6}
+
+boxplot(final_proj_data[, 2:6], col = "skyblue", border = "red", 
+        main = "Box Plot of Different Variables")
+```
+
+The distribution of several variables in the dataset is shown visually by the box plot. A given variable's distribution is shown by each box, and the median value is indicated by the middle line. The box covers the interquartile range (IQR) and goes from the first quartile (Q1) to the third quartile (Q3). The whiskers reach the greatest and lowest values within this range, or 1.5 times the IQR above and below the upper and lower quartiles, respectively.
+The variables in this figure are identified by varying shades of blue, and for improved visibility, the box edges are highlighted in red. This color scheme provides important information about the distributional properties of the variables and improves the plot's clarity and visual appeal. It also makes it simpler to distinguish between the variables.
+
+
+### 4. Histogram
+
+```{r, fig.width=8, fig.height=6}
+# Histogram of average temperature
+ggplot(final_proj_data, aes(x = TemperatureCAvg)) +
+  geom_histogram(binwidth = 1, fill = "lightgreen", color = "black") +
+  labs(title = "Distribution of Average Temperature", x = "Temperature (°C)", y = "Frequency")
+
+```
+
+The dataset's average temperature distribution is shown graphically via the histogram. The height of each bar shows the frequency of temperatures falling inside its respective range, and each bar represents a range of temperatures (binwidth = 1) along the x-axis.
+
+Because the histogram in this plot is filled with a light green color, it stands out visually and is simple to identify from other parts. The bars' black edge makes them easier to see and clearly delineates the borders of each bin.
+
+### 5. Density Plot
+
+```{r, fig.width=8, fig.height=6}
+# Density plot of average temperature
+ggplot(final_proj_data, aes(x = TemperatureCAvg)) +
+  geom_density(fill = "lightgreen") +
+  labs(title = "Density Plot of Average Temperature", x = "Temperature (°C)", y = "Density")
+```
+
+By calculating the probability density function, the density plot makes the distribution of average temperatures in the dataset visually appealing. It offers a smooth curve that depicts the data's distributional form.
+
+Higher peaks denote areas of higher density in this figure, where the probability density is represented by the area under the curve. The curve's fill color is bright green, which enhances its visual attractiveness and distinguishability.
+The title "Density Plot of Average Temperature" clearly indicates the purpose of the plot, while the labels on the x and y axes provide context for interpreting the data. Overall, this density plot effectively communicates the distributional characteristics of the average temperature variable in the dataset.
+
+### 6. Scatter Plot
+
+```{r, fig.width=8, fig.height=6}
+ggplot(final_proj_data, aes(x = Precmm, y = TemperatureCAvg)) +
+  geom_point(color = "violet") +
+  labs(title = "Scatter Plot of Temperature vs. Precipitation", x = "Precipitation (mm)", y = "Temperature (°C)")
+
+```
+
+The relationship between average temperature and precipitation is shown visually by the scatter plot. For each individual dataset observation, the combination of temperature and precipitation is represented as a point on the plot.
+
+The above graph displays temperature in degrees Celsius (°C) on the y-axis and precipitation in millimeters (mm) on the x-axis. The blue markings on each point contrast sharply with the white background.
+
+The title "Scatter Plot of Temperature vs. Precipitation" clearly indicates the purpose of the plot, while the labels on the x and y axes provide context for interpreting the data.
+
+This scatter plot allows us to visually assess any potential relationship or pattern between temperature and precipitation variables.
+
+### 7. Pair PLot
+
+```{r, fig.width=8, fig.height=6}
+# Pair plot of selected variables
+selected_vars <- c("TemperatureCAvg", "Precmm", "WindkmhGust", "SunD1h")
+pairs(final_proj_data[selected_vars])
+```
+
+Using scatter plots and diagonal histograms for each pair of variables, the pair plot illustrates the relationships between several variables in a dataset. The histograms display the distribution of each individual variable, while the scatter plots illustrate the connection between two variables.
+
+The variables "TemperatureCAvg", "Precmm", "WindkmhGust", and "SunD1h" are the ones that were chosen for this pair plot. The average temperature, precipitation, wind gusts, and hours of sunlight are represented by these variables, in that order.
+
+The pair plot's diagonal shows the distribution of values for each variable as represented by histograms. Scatter plots that show the associations between pairs of variables are called off-diagonal plots. An observation from the dataset is represented by each point in the scatter plots.
+
+We can visually examine the distributions and interactions between the chosen variables with this pair plot, which offers insights into possible patterns or correlations in the data.
+
+### 8. Time Series Plot
+
+```{r, fig.width=8, fig.height=6}
+# Time series plot of temperature
+ggplot(data, aes(x = Date, y = TemperatureCAvg)) +
+  geom_line(color = "red") +
+  labs(title = "Time Series Plot of Temperature", x = "Date", y = "Temperature (°C)")
+```
+
+The average temperature's fluctuation throughout year is seen in the time series plot. The average temperature measured on a particular day is represented by each point on the plot. The dates are shown on the x-axis, while the matching average temperature values in degrees Celsius are displayed on the y-axis.
+
+The general trend in temperature variations during the dataset's time period is depicted visually by the red line that connects the dots. We can see any patterns, trends, or seasonality in the changes in temperature over time with this map.
+
+By analyzing this time series plot, we can gain insights into the temperature patterns and fluctuations, which can be valuable for understanding climate dynamics and making informed decisions in various applications, such as agriculture, energy management, and environmental monitoring.
+
+### 9. Smoothning Plot
+
+```{r, fig.width=8, fig.height=6}
+# Time series plot of temperature with smoothing
+ggplot(data, aes(x = Date, y = TemperatureCAvg)) +
+  geom_line(color = "purple") +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Time Series Plot of Temperature with Smoothing", x = "Date", y = "Temperature (°C)")
+
+```
+
+Like the previous graph, the time series plot with smoothing shows the change in the average temperature over time. To offer a clearer representation of the underlying trend in temperature changes, a smoothing curve has been applied to this graphic.
+
+The raw data points, or actual recorded average temperature readings on certain days, are shown by the blue line. By minimizing noise and highlighting the underlying pattern, the red smoothing curve—which was produced using the LOESS (Locally Weighted Scatterplot Smoothing) method—makes it easier to see the general trend in temperature changes.
+
+This display allows for a better understanding of the long-term temperature trends while maintaining the individual data points for reference since it combines the raw data points with the smoothed curve. Finding small variations or patterns in temperature over time—which might not be immediately obvious from the raw data alone—can be made easier with the help of this graphic.
+
+### 10. Dot Plot
+
+```{r, fig.width=8, fig.height=6}
+# Counting the frequency of each wind direction
+wind_direction_freq <- table(final_proj_data$WindkmhDir)
+
+# Converting the table to a data frame
+wind_direction_df <- data.frame(Direction = names(wind_direction_freq),
+                                 Frequency = as.numeric(wind_direction_freq))
+
+# Creating a dot plot
+ggplot(wind_direction_df, aes(x = Direction, y = Frequency)) +
+  geom_point(size = 3, color = "orange") +
+  labs(title = "Frequency of Wind Directions", x = "Wind Direction", y = "Frequency")
+```
+
+The frequency distribution of the wind directions found in the dataset is depicted in this dot plot. Every dot is a representative of a particular wind direction; the direction is indicated by its location on the x-axis, and the frequency of occurrence is shown by its vertical position.
+
+The many wind directions, including North (N), South (S), East (E), West (W), and their variants, are shown on the x-axis. The frequency of each wind direction is represented by the y-axis, which shows how frequently each direction occurs in the dataset.
+
+For maximum regularity, the dots are uniformly sized and have an orange tint to enhance visibility. Viewers may determine which wind directions are most common and evaluate any patterns or trends in the wind direction data by looking at the distribution of dots along the x-axis.
+
+### 11. Other Plots
+### i) 
+```{r, fig.width=8, fig.height=6}
+
+bar_plot_table <- final_proj_data[,c(6,17)]
+# bar_plot_table
+
+bar_plot_table$Month <- factor(bar_plot_table$Month, levels = unique(bar_plot_table$Month))
+
+mean_hravg <- bar_plot_table %>%
+  group_by(Month) %>%
+  summarise(mean_HrAvg = mean(HrAvg, na.rm = TRUE))
+
+ggplot(mean_hravg, aes(x = Month, y = mean_HrAvg)) +
+  geom_bar(stat = "identity", fill = "cyan") +
+  scale_x_discrete(labels = 1:12) +  # Set x-axis labels to integers 1 through 12
+  labs(x = "Month", y = "Mean HrAvg", title = "Mean HrAvg by Month")
+```
+
+The mean HrAvg (average hour) for every month of the year is displayed in this bar graphic. Every bar shows the average HrAvg value for a particular month, with the months of January through December shown on the x-axis.
+
+The typical hourly rate for each month is shown visually by the cyan-colored bars, which show the HrAvg values. This graphic makes it possible to identify any seasonal patterns or year-over-year changes in HrAvg. For example, depending on the context of the dataset, peaks or dips in the mean HrAvg over various months may reflect times of greater or decreased activity.
+
+```{r, fig.width=8, fig.height=6}
+wind_data <- final_proj_data %>%
+  select(WindkmhInt, WindkmhGust, Month) %>%
+  group_by(Month) %>%
+  summarise(mean_WindkmhInt = mean(WindkmhInt, na.rm = TRUE),
+            mean_WindkmhGust = mean(WindkmhGust, na.rm = TRUE))
+
+
+# Expanding the data frame to have separate rows for each variable
+mean_wind_expanded <- wind_data %>%
+  pivot_longer(cols = c(mean_WindkmhInt, mean_WindkmhGust),
+               names_to = "Variable",
+               values_to = "Mean_Value")
+
+
+# Creating a bar plot with increased gap between bars for each month
+ggplot(mean_wind_expanded, aes(x = factor(Month), y = Mean_Value, fill = Variable)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.5), width = 0.5) +
+  labs(x = "Month", y = "Mean Wind Speed", fill = "Variable") +
+  scale_x_discrete(labels = 1:12) +
+  scale_fill_manual(values = c("cyan", "yellow")) +
+  ggtitle("Mean Wind Speeds by Month")
+
+
+```
+
+The average wind speed (measured in kilometers per hour) for each month is shown in this bar plot, which distinguishes between mean_WindkmhInt (average wind speed) and mean_WindkmhGust (average gust wind speed). A set of bars is used to symbolize each month; each pair of bars shows the mean value of the corresponding wind speed variable.
+
+The months of the year are represented by the labels on the x-axis, which run from January to December. The mean wind speed is represented on the y-axis, giving a numerical representation of the typical wind conditions for each month.
+
+The bars are color-coded to distinguish between the two wind speed variables: mean_WindkmhInt is represented in cyan, while mean_WindkmhGust is depicted in yellow. By comparing the heights of the bars within each month, one can discern the differences in average wind speeds and gust speeds throughout the year.
+
+## Importing Crime Dataset for visualising Map.
+
+```{r}
+
+# Importing the libraries
+crime <- read.csv('crime23.csv')
+
+
+str(crime)
+
+```
+
+```{r, warning=FALSE}
+loc<- data.frame(
+  inc_type = crime$category,
+  street = crime$street_name,
+  latitude = as.numeric(crime$lat),
+  longitude = as.numeric(crime$long)
+)
+
+# Creating a leaflet map with circle markers.
+map<- leaflet(loc) %>%
+  addTiles() %>%
+  addCircleMarkers(radius = 0.5, color = "red", fillOpacity = 1, 
+                   popup = paste0("Street: ", loc$street, 
+                                  "<br>Incident Type: ", loc$inc_type)) %>%
+  setView(lng = 0.9040, lat = 51.8891, zoom = 14)
+
+
+map
+```
+
+Using the crime data, we created a leaflet map, marking each occurrence's location with a circle marker. The sort of occurrence is indicated by the color of each marker, and further information is provided by the popup, which includes the street name and incident category. Finding hotspots or trends is made easier by the map's visual depiction of the geographical distribution of occurrences in the region.
+
+## Conclusion
+This project has offered a thorough examination of the climatic data that was gathered in 2023 from a weather station near Colchester. We have learned a great deal about the seasonal variations in the weather using exploratory data analysis and visualization tools.
+This project has demonstrated the importance of climate data analysis in understanding local weather patterns, assessing climate variability, and informing decision-making processes across various sectors. The insights gained from this analysis can contribute to improved weather forecasting, climate resilience planning, and environmental management strategies in the Colchester area and beyond
